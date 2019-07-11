@@ -36,24 +36,18 @@ sudo systemctl status nzbget
 ## Sonarr
 install_sonarr () {
     # Install Mono Repo
-    sudo apt install apt-transport-https dirmngr gnupg ca-certificates
-sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 \
---recv-keys 3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF
-echo "deb https://download.mono-project.com/repo/debian stable-stretch main" | \
-sudo tee /etc/apt/sources.list.d/mono-official-stable.list
-sudo apt update
+    sudo apt install apt-transport-https dirmngr gnupg ca-certificates mediainfo
+    sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 \
+    --recv-keys 3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF
+    echo "deb https://download.mono-project.com/repo/debian stable-stretch main" | \
+    sudo tee /etc/apt/sources.list.d/mono-official-stable.list
 
-# Install mediaInfo Repo
-wget https://mediaarea.net/repo/deb/repo-mediaarea_1.0-9_all.deb && \
-sudo dpkg -i repo-mediaarea_1.0-9_all.deb && apt-get update
+    # Add Sonarr Repo
+    sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 \
+    --recv-keys 2009837CBFFD68F45BC180471F4F90DE2A9B4BF8
+    echo "deb https://apt.sonarr.tv/debian stretch main" | \
+    sudo tee /etc/apt/sources.list.d/sonarr.list
 
-# Add Sonarr Repo
-sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 \
---recv-keys 2009837CBFFD68F45BC180471F4F90DE2A9B4BF8
-echo "deb https://apt.sonarr.tv/debian stretch main" | \
-sudo tee /etc/apt/sources.list.d/sonarr.list
-sudo apt update
-
-# Install Sonarr
-sudo apt install sonarr
-}
+    # Install Sonarr
+    sudo apt update && sudo apt install mono-devel sonarr -y
+    }
