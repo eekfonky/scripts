@@ -1,23 +1,61 @@
 #!/bin/bash
 
+RED='\033[1;31m'
+YELLOW='\033[1;33m'
+GREEN='\033[1;32m'
+BOLD='\033[1m'
+NC='\033[0m' # No Colour
+
+## Check OS version
+VERSION="$(lsb_release -cs)"
+if [[ "$VERSION" = "bionic" ]]; then
+HOME_DIR="/home/ANT.AMAZON.COM"
+else
+[[ "$VERSION" = "xenial" ]]
+HOME_DIR="/home/local/ANT"
+fi
+
+check_sudo () {
+    ## Get username & check running as sudo
+    USER_ID="$(logname)"
+    if [ "$EUID" -ne 0 ]; then
+        echo -e "Please run this using; \nsudo ./$(basename "$0")"
+        exit
+    fi
+}
+
+up_to_date () {
+    sudo apt update && apt dist-upgrade -y
+    clear
+}
+
+packages_to_install () {
+    PKG_NAMES=("git" "mediainfo")
+    # Run the run_install function if any of the applications are missing
+    dpkg -s "${PKG_NAMES[@]}" >/dev/null 2>&1 || sudo apt install -y ${PKG_NAMES[@]}
+}
+
 ## NZBGet
 install_nzbget () {
+    echo -e "${YELLOW}Installing NZBGet...${NC}"
+    sleep 3
     # Create directory & change permissions
-    sudo mkdir -r /opt/nzbget && sudo chown -R osmc:osmc /opt/nzbget
+    sudo mkdir -r /opt/nzbget && chown -R osmc:osmc /opt/nzbget
     # Download nzbget latest to /tmp
     wget https://nzbget.net/download/nzbget-latest-bin-linux.run -P /tmp
     # Make executable
     chmod +x /tmp/nzbget-latest-bin-linux.run
     # Launch into /opt/nzbget
     sh /tmp/nzbget-latest-bin-linux.run --destdir /opt/nzbget
-
+    # Create systemd service
+    sudo cat > /etc/systemd/system/nzbget.service << EOF
 [Unit]
 Description=NZBGet
 After=network.target
 
 [Service]
-User=osmc
-Group=osmc
+User=$USER_ID
+Group=$USER_ID
 Type=forking
 ExecStart=/opt/nzbget/nzbget -D
 ExecStop=/opt/nzbget/nzbget -Q
@@ -27,10 +65,20 @@ Restart=on-failure
 
 [Install]
 WantedBy=multi-user.target
+EOF
 
+# Enable NZBGet at boot & start
 sudo systemctl enable nzbget
 sudo systemctl start nzbget
-sudo systemctl status nzbget
+if ! sudo systemctl is-active --quiet nzbget
+then
+echo "Service is not running, please check the logs"
+exit
+fi
+
+# get internal IP & display URL
+internal=$(hosname -I)
+echo "NZBGet is running on http://""$internal"":6789"
 }
 
 ## Sonarr
@@ -51,3 +99,47 @@ install_sonarr () {
     # Install Sonarr
     sudo apt update && sudo apt install mono-devel sonarr -y
     }
+
+# main menu function
+main_menu () {
+  clear
+  PS3="Select a number: "
+    if [ -d "$HOME_DIR" ]
+    then
+    mapfile -t USERNAME < <(find "$HOME_DIR" -mindepth 1 -maxdepth 1 -type d | sed 's!.*/!!' | sort)
+    # Get basename for users;
+    string="@(${USERNAME[0]}"
+    for((i=1;i<${#USERNAME[@]};i++))
+    do
+      string+="|${USERNAME[$i]}"
+    done
+    string+=")"
+    select NAME in "Clear ALL Users" "${USERNAME[@]}" "Quit"
+    do
+        case $NAME in
+        "Clear ALL Users")
+            # Call clear_cache_all Function
+            clear_cache_all
+            exit
+            ;;
+        $string)
+            # Call clear_cache_user Function
+            clear_cache_user
+            ;;
+        "Quit")
+            exit
+            ;;
+            *)
+            echo "Invalid option, please try again";;
+        esac
+    done
+    else
+      echo -e "${RED}Error: Cannot find home directories...exiting${NC}"
+    fi
+}
+
+## SCRIPT COMMANDS ##
+check_sudo
+up_to_date
+packages_to_install
+main_menu
