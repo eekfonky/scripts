@@ -6,15 +6,6 @@ GREEN='\033[1;32m'
 BOLD='\033[1m'
 NC='\033[0m' # No Colour
 
-## Check OS version
-VERSION="$(lsb_release -cs)"
-if [[ "$VERSION" = "bionic" ]]; then
-HOME_DIR="/home/ANT.AMAZON.COM"
-else
-[[ "$VERSION" = "xenial" ]]
-HOME_DIR="/home/local/ANT"
-fi
-
 check_sudo () {
     ## Get username & check running as sudo
     USER_ID="$(logname)"
@@ -40,13 +31,14 @@ install_nzbget () {
     echo -e "${YELLOW}Installing NZBGet...${NC}"
     sleep 3
     # Create directory & change permissions
-    sudo mkdir -r /opt/nzbget && chown -R osmc:osmc /opt/nzbget
+    sudo mkdir -r /opt/nzbget && chown -R $USER_ID:$USER_ID /opt/nzbget 
     # Download nzbget latest to /tmp
     wget https://nzbget.net/download/nzbget-latest-bin-linux.run -P /tmp
     # Make executable
     chmod +x /tmp/nzbget-latest-bin-linux.run
     # Launch into /opt/nzbget
     sh /tmp/nzbget-latest-bin-linux.run --destdir /opt/nzbget
+    sudo chown -R $USER_ID:$USER_ID /opt/nzbget
     # Create systemd service
     sudo cat > /etc/systemd/system/nzbget.service << EOF
 [Unit]
@@ -72,13 +64,13 @@ sudo systemctl enable nzbget
 sudo systemctl start nzbget
 if ! sudo systemctl is-active --quiet nzbget
 then
-echo "Service is not running, please check the logs"
+echo "${RED}Service is not running, please check the logs${NC}"
 exit
 fi
 
 # get internal IP & display URL
-internal=$(hosname -I)
-echo "NZBGet is running on http://""$internal"":6789"
+INTERNAL=$(hostname -I)
+echo "NZBGet is running on http://""$INTERNAL"":6789"
 }
 
 ## Sonarr
@@ -97,7 +89,7 @@ install_sonarr () {
     sudo tee /etc/apt/sources.list.d/sonarr.list
 
     # Install Sonarr
-    sudo apt update && sudo apt install mono-devel sonarr -y
+    sudo apt update && sudo apt install sonarr -y
     }
 
 # main menu function
