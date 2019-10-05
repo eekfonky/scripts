@@ -112,7 +112,7 @@ User=$USER_ID
 Group=$USER_ID
 
 Type=forking
-ExecStart=/usr/bin/python3 /opt/$SERVICE/start.py -q --daemon --nolaunch
+ExecStart=/usr/bin/python3 /opt/$SERVICE/start.py -q --daemon
 TimeoutStopSec=25
 KillMode=process
 Restart=on-failure
