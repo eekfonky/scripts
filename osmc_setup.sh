@@ -112,8 +112,7 @@ User=$USER_ID
 Group=$USER_ID
 
 Type=forking
-PIDFile=/var/run/PyMedusa/Medusa.pid
-ExecStart=/usr/bin/python3 /opt/$SERVICE/start.py -q --daemon --nolaunch --pidfile=/var/run/PyMedusa/Medusa.pid --datadir=/opt/$SERVICE
+ExecStart=/usr/bin/python3 /opt/$SERVICE/start.py -q --daemon --nolaunch
 TimeoutStopSec=25
 KillMode=process
 Restart=on-failure
