@@ -32,7 +32,7 @@ spinner () {
 
 up_to_date () {
     echo -e "${YELLOW}Checking for updates..."
-    sudo apt -qqq update && sudo apt -qqq dist-upgrade &
+    sudo apt -qqq update && sudo apt -qqq dist-upgrade > /dev/null 2>&1 &
     PID=$!
     # Call "spinner" function
     spinner
@@ -43,7 +43,7 @@ packages_to_install () {
     echo -e "${YELLOW}Checking for dependencies..."
     PKG_NAMES=("git" "mediainfo" "unrar" "openssl" "python3" "python3-lxml")
     # Run the run_install function if any of the applications are missing
-    dpkg -s "${PKG_NAMES[@]}" >/dev/null 2>&1 || sudo apt install -qqq "${PKG_NAMES[@]}"
+    dpkg -s "${PKG_NAMES[@]}" > /dev/null 2>&1 || sudo apt install -qqq "${PKG_NAMES[@]}" > /dev/null 2>&1
     PID=$!
     # Call "spinner" function
     spinner
