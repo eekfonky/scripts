@@ -98,7 +98,7 @@ install_nzbget () {
         sleep 3
         main_menu
     else
-        cat > "$SYSD" << EOF
+        sudo tee "$SYSD" > /dev/null << EOF
 [Unit]
 Description=NZBGet
 After=network.target #media-extHD.mount
@@ -117,7 +117,7 @@ Restart=on-failure
 WantedBy=multi-user.target
 EOF
     fi
-    
+
     # Call "startup" function to Enable NZBGet at boot
     startup
 }
@@ -136,14 +136,14 @@ install_medusa () {
     sudo mkdir -p /opt/$SERVICE && sudo chown "$USER_ID":"$USER_ID" /opt/$SERVICE
     sudo git clone https://github.com/pymedusa/Medusa.git /opt/$SERVICE
     sudo chown -R "$USER_ID":"$USER_ID" /opt/$SERVICE
-    
+
     # Create systemd service
     if [ -f "$SYSD" ]; then
         echo -e "${RED}$SERVICE already exists, exiting back to menu...${NC}"
         sleep 3
         main_menu
     else
-        cat > "$SYSD" << EOF
+        sudo tee "$SYSD" > /dev/null << EOF
 [Unit]
 Description=Medusa
 After=network.target #media-extHD.mount
@@ -162,7 +162,7 @@ Restart=on-failure
 WantedBy=multi-user.target
 EOF
     fi
-    
+
     # Call "startup" function to Enable Service at boot
     startup
 }
@@ -183,27 +183,27 @@ install_sonarr () {
     --recv-keys 3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF
     echo "deb https://download.mono-project.com/repo/debian stable-stretch main" | \
     sudo tee /etc/apt/sources.list.d/mono-official-stable.list
-    
+
     # Add Sonarr Repo
     sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 \
     --recv-keys 2009837CBFFD68F45BC180471F4F90DE2A9B4BF8
     echo "deb https://apt.$SERVICE.tv/debian stretch main" | \
     sudo tee /etc/apt/sources.list.d/$SERVICE.list
-    
+
     # Install Sonarr
     sudo apt -qqq update && sudo apt -qqq install $SERVICE -y &
     PID=$!
     # Call "spinner" function
     spinner
     echo -e "${NC}${CL}${UP1}"
-    
+
     # Create systemd service
     if [ -f "$SYSD" ]; then
         echo -e "${RED}$SERVICE already exists, exiting back to menu...${NC}"
         sleep 3
         main_menu
     else
-        cat > "$SYSD" << EOF
+        sudo tee "$SYSD" > /dev/null << EOF
 [Unit]
 Description=Sonarr
 After=network.target #media-extHD.mount
@@ -222,7 +222,7 @@ Restart=on-failure
 WantedBy=multi-user.target
 EOF
     fi
-    
+
     # Call "startup" function to Enable Service at boot
     startup
 }
@@ -241,14 +241,14 @@ install_radarr () {
     sudo mkdir -p /opt/$SERVICE && sudo chown "$USER_ID":"$USER_ID" /opt/$SERVICE
     sudo git clone https://github.com/Radarr/Radarr.git /opt/$SERVICE
     sudo chown -R "$USER_ID":"$USER_ID" /opt/$SERVICE
-    
+
     # Create systemd service
     if [ -f "$SYSD" ]; then
         echo -e "${RED}$SERVICE already exists, exiting back to menu...${NC}"
         sleep 3
         main_menu
     else
-        cat > "$SYSD" << EOF
+        sudo tee "$SYSD" > /dev/null << EOF
 [Unit]
 Description=Radarr
 After=network.target #media-extHD.mount
