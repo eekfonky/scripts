@@ -70,7 +70,7 @@ startup () {
         exit
     fi
     # get internal IP & display URL
-    INTERNAL=$(hostname -I)
+    INTERNAL=$(hostname -I | awk '{print $1}')
     echo -e "${GREEN}$SERVICE is running on http://$INTERNAL:$PORT${NC}"
 }
 
