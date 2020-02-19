@@ -53,7 +53,7 @@ packages_to_install () {
 check_installed () {
     if sudo systemctl is-active --quiet "$SERVICE"
     then
-        echo -e "${RED}$SERVICE is installed, skipping${NC}"
+        echo -e "${RED}$SERVICE is running, exiting to main menu${NC}"
         sleep 3
         main_menu
     fi
@@ -66,6 +66,7 @@ startup () {
     if ! sudo systemctl is-active --quiet "$SERVICE"
     then
         echo "${RED}Service is not running, please check the logs${NC}"
+        sleep 3
         exit
     fi
     # get internal IP & display URL
@@ -84,14 +85,14 @@ install_nzbget () {
     echo -e "${YELLOW}Installing NZBGet...${NC}"
     sleep 3
     # Create directory & change permissions
-    sudo mkdir -r /opt/$SERVICE
+    sudo mkdir -r /opt/"$SERVICE"
     # Download nzbget latest to /tmp
-    wget https://$SERVICE.net/download/$SERVICE-latest-bin-linux.run -P /tmp
+    wget https://"$SERVICE".net/download/"$SERVICE"-latest-bin-linux.run -P /tmp
     # Make executable
-    chmod +x /tmp/$SERVICE-latest-bin-linux.run
+    chmod +x /tmp/"$SERVICE"-latest-bin-linux.run
     # Launch into /opt/nzbget
-    sh /tmp/$SERVICE-latest-bin-linux.run --destdir /opt/$SERVICE
-    sudo chown -R "$USER_ID":"$USER_ID" /opt/$SERVICE
+    sh /tmp/"$SERVICE"-latest-bin-linux.run --destdir /opt/"$SERVICE"
+    sudo chown -R "$USER_ID":"$USER_ID" /opt/"$SERVICE"
     # Create systemd service
     if [ -f "$SYSD" ]; then
         echo -e "${RED}$SERVICE already exists, exiting back to menu...${NC}"
@@ -133,9 +134,9 @@ install_medusa () {
     echo -e "${YELLOW}Installing Medusa...${NC}"
     sleep 3
     # Clone Medusa git repo
-    sudo mkdir -p /opt/$SERVICE && sudo chown "$USER_ID":"$USER_ID" /opt/$SERVICE
-    sudo git clone https://github.com/pymedusa/Medusa.git /opt/$SERVICE
-    sudo chown -R "$USER_ID":"$USER_ID" /opt/$SERVICE
+    sudo mkdir -p /opt/"$SERVICE" && sudo chown "$USER_ID":"$USER_ID" /opt/"$SERVICE"
+    sudo git clone https://github.com/pymedusa/Medusa.git /opt/"$SERVICE"
+    sudo chown -R "$USER_ID":"$USER_ID" /opt/"$SERVICE"
 
     # Create systemd service
     if [ -f "$SYSD" ]; then
@@ -187,11 +188,11 @@ install_sonarr () {
     # Add Sonarr Repo
     sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 \
     --recv-keys 2009837CBFFD68F45BC180471F4F90DE2A9B4BF8
-    echo "deb https://apt.$SERVICE.tv/debian stretch main" | \
-    sudo tee /etc/apt/sources.list.d/$SERVICE.list
+    echo "deb https://apt."$SERVICE".tv/debian stretch main" | \
+    sudo tee /etc/apt/sources.list.d/"$SERVICE".list
 
     # Install Sonarr
-    sudo apt -qqq update && sudo apt -qqq install $SERVICE -y &
+    sudo apt -qqq update && sudo apt -qqq install "$SERVICE" -y > /dev/null 2>&1 &
     PID=$!
     # Call "spinner" function
     spinner
@@ -238,9 +239,9 @@ install_radarr () {
     echo -e "${YELLOW}Installing Radarr...${NC}"
     sleep 3
     # Clone Radarr git repo
-    sudo mkdir -p /opt/$SERVICE && sudo chown "$USER_ID":"$USER_ID" /opt/$SERVICE
-    sudo git clone https://github.com/Radarr/Radarr.git /opt/$SERVICE
-    sudo chown -R "$USER_ID":"$USER_ID" /opt/$SERVICE
+    sudo mkdir -p /opt/"$SERVICE" && sudo chown "$USER_ID":"$USER_ID" /opt/"$SERVICE"
+    sudo git clone https://github.com/Radarr/Radarr.git /opt/"$SERVICE"
+    sudo chown -R "$USER_ID":"$USER_ID" /opt/"$SERVICE"
 
     # Create systemd service
     if [ -f "$SYSD" ]; then
@@ -279,7 +280,7 @@ main_menu () {
     OPTIONS=("NZBGet" "Medusa" "Radarr" "Sonarr" "Quit")
     select OPT in "${OPTIONS[@]}"
     do
-        case $OPT in
+        case "$OPT" in
             "NZBGet")
                 install_nzbget
             ;;
