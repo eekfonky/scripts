@@ -1,0 +1,49 @@
+---
+
+- name: Install an Conigure Media Packages
+  hosts: all
+  become: true
+  tasks:
+    - name: Update all packages to the latest version
+      apt:
+        upgrade: dist
+        autoclean: yes
+        autoremove: yes
+
+    - name: Mount External HDD in fstab
+      mount:
+        path: /mnt/extHD
+        src: f3224a20-0cab-4fea-9670-45e42a9550b6
+        fstype: ext4
+        state: mounted
+  
+    - name: Add Mono Repository
+      apt_repository:
+        repo: deb https://download.mono-project.com/repo/ubuntu stable-bionic main
+        state: present
+    
+    - name: Add Plex Repository into Sources List and Add Signing Key
+      apt_repository:
+        repo: deb https://downloads.plex.tv/repo/deb public main
+        state: present
+      apt_key:
+        url: https://downloads.plex.tv/plex-keys/PlexSign.key
+        state: present
+
+    - name: Install Mediainfo repository
+      apt:
+        deb: https://mediaarea.net/repo/deb/repo-mediaarea_1.0-12_all.deb
+
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
+    - name: Install Media Downloader packages
+      apt:
+        pkg:
+        - gnupg
+        - ca-certificates  
+        - sonarr
+        - transmission-daemon
+        - nzbget
+        - plexmediaserver
