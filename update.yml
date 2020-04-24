@@ -1,0 +1,16 @@
+---
+- name: Upgrade packages
+  hosts: all
+  become: true
+  tasks:
+    - name: Update all packages to the latest version
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+        upgrade: dist
+      register: apt
+    - debug: msg={{ apt.stdout.split('\n')[:-1] }}
+    - name: Remove unused packages and kernels
+      apt:
+        autoclean: yes
+        autoremove: yes
