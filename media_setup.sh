@@ -41,6 +41,7 @@ up_to_date () {
 packages_to_install () {
     echo -e "${YELLOW}Checking for dependencies..."
     PKG_NAMES=("git" "mediainfo" "unrar" "openssl" "python3" "python3-lxml")
+    # Run the run_install function if any of the applications are missing
     dpkg -s "${PKG_NAMES[@]}" >/dev/null 2>&1 || sudo apt install -qqq "${PKG_NAMES[@]}"
     PID=$!
     # Call "spinner" function
@@ -58,7 +59,7 @@ check_installed () {
 }
 
 startup () {
-    # Enable at boot & start
+    # Enable Medusa at boot & start
     sudo systemctl enable "$SERVICE"
     sudo systemctl start "$SERVICE"
     if ! sudo systemctl is-active --quiet "$SERVICE"
@@ -121,7 +122,7 @@ install_transmission () {
     SYSD="/lib/systemd/system/$SERVICE-daemon.service"
     # Call "check_installed" function
     check_installed
-    # Install Trasmission
+    # Install NZBGet
     echo -e "${YELLOW}Installing Transmission...${NC}"
     sleep 3
     sudo apt install transmission-daemon -y
@@ -173,7 +174,7 @@ install_medusa () {
     sudo mkdir -p /opt/$SERVICE && sudo chown "$USER_ID":"$USER_ID" /opt/$SERVICE
     sudo git clone https://github.com/pymedusa/Medusa.git /opt/$SERVICE
     sudo chown -R "$USER_ID":"$USER_ID" /opt/$SERVICE
-
+    
     # Create systemd service
     if [ -f "$SYSD" ]; then
         echo -e "${RED}$SERVICE already exists, exiting back to menu...${NC}"
@@ -219,18 +220,18 @@ install_sonarr () {
     sudo apt install gnupg ca-certificates
     sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF
     echo "deb https://download.mono-project.com/repo/ubuntu stable-bionic main" | sudo tee /etc/apt/sources.list.d/mono-official-stable.list
-
+    
     # Add MediaInfo Repo
     wget https://mediaarea.net/repo/deb/repo-mediaarea_1.0-12_all.deb && \
     sudo dpkg -i repo-mediaarea_1.0-12_all.deb && \
-
+    
     # Install Sonarr
     sudo apt update && sudo apt -qqq install $SERVICE -y &
     PID=$!
     # Call "spinner" function
     spinner
     echo -e "${NC}${CL}${UP1}"
-
+    
     # Create systemd service
     if [ -f "$SYSD" ]; then
         echo -e "${RED}$SERVICE already exists, exiting back to menu...${NC}"
@@ -276,7 +277,7 @@ install_radarr () {
     sudo mkdir -p /opt/$SERVICE && sudo chown "$USER_ID":"$USER_ID" /opt/$SERVICE
     sudo git clone https://github.com/Radarr/Radarr.git /opt/$SERVICE
     sudo chown -R "$USER_ID":"$USER_ID" /opt/$SERVICE
-
+    
     # Create systemd service
     if [ -f "$SYSD" ]; then
         echo -e "${RED}$SERVICE already exists, exiting back to menu...${NC}"
