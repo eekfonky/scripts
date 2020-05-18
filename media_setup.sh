@@ -18,7 +18,10 @@ check_sudo () {
 
 up_to_date () {
     echo -e "${YELLOW}Checking /etc/apt.sources..."
-    sudo sed -i.bak 's|ControlIP=127.0.0.1|ControlIP=0.0.0.0|g' /etc/apt/sources.list
+    sudo sed -i.bak 's|# deb http://ports.ubuntu.com/ubuntu-ports focal-backports main restricted universe multiverse\
+    |deb http://ports.ubuntu.com/ubuntu-ports focal-backports main restricted universe multiverse|g' /etc/apt/sources.list
+    sudo sed -i.bak 's|# deb http://archive.canonical.com/ubuntu focal partner\
+    |deb http://archive.canonical.com/ubuntu focal partner|g' /etc/apt/sources.list
     echo -e "${YELLOW}Checking for updates..."
     sudo apt -qq update && sudo apt -qq dist-upgrade -y
 }
