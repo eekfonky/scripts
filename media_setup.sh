@@ -238,6 +238,8 @@ install_radarr () {
     # Installing
     echo -e "${YELLOW}Installing Radarr...${NC}"
     sleep 3
+    # Install dependency
+    sudo apt install libmono-i18n4.0-all -y
     # Clone Radarr git repo
     curl -L -O "$( curl -s https://api.github.com/repos/Radarr/Radarr/releases \
     | grep linux.tar.gz | grep browser_download_url | head -1 | cut -d \" -f 4 )"
