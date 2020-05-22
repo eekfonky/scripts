@@ -14,7 +14,7 @@
       apt:
         autoclean: yes
         autoremove: yes
-    - name: Reboot the Debian or Ubuntu server
+    - name: Reboot the server
       reboot:
         msg: "Reboot initiated by Ansible due to kernel updates"
         connect_timeout: 5
