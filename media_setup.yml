@@ -1,13 +1,12 @@
 ---
 
-- name: Install an Conigure Media Packages
-  hosts: all
+- name: Install and Configure Media Packages
+  hosts: media
   become: true
   tasks:
     - name: Update all packages to the latest version
       apt:
         upgrade: dist
-        autoclean: yes
         autoremove: yes
 
     - name: Mount External HDD in fstab
@@ -16,23 +15,30 @@
         src: f3224a20-0cab-4fea-9670-45e42a9550b6
         fstype: ext4
         state: mounted
-  
-    - name: Add Mono Repository
+    
+    - name: Add apt-key for Sonarr
+      apt_key:
+        keyserver: hkp://keyserver.ubuntu.com:80
+        id: 2009837CBFFD68F45BC180471F4F90DE2A9B4BF8
+
+    - name: Add Sonarr Repository
       apt_repository:
-        repo: deb https://download.mono-project.com/repo/ubuntu stable-bionic main
+        repo: deb https://apt.sonarr.tv/ubuntu {{ ansible_distribution_release }} main
         state: present
     
-    - name: Add Plex Repository into Sources List and Add Signing Key
-      apt_repository:
-        repo: deb https://downloads.plex.tv/repo/deb public main
-        state: present
+    - name: Add apt-key for Mono
       apt_key:
-        url: https://downloads.plex.tv/plex-keys/PlexSign.key
+        keyserver: hkp://keyserver.ubuntu.com:80
+        id: 3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF
+
+    - name: Add Mono Repository
+      apt_repository:
+        repo: deb https://download.mono-project.com/repo/ubuntu stable-{{ ansible_distribution_release }} main
         state: present
 
     - name: Install Mediainfo repository
       apt:
-        deb: https://mediaarea.net/repo/deb/repo-mediaarea_1.0-12_all.deb
+        deb: https://mediaarea.net/repo/deb/repo-mediaarea_1.0-13_all.deb
 
     - name: Update apt cache
       apt:
@@ -46,4 +52,7 @@
         - sonarr
         - transmission-daemon
         - nzbget
-        - plexmediaserver
+      
+    - name: Install Plex Media Server
+      snap:
+        name: plexmediaserver
