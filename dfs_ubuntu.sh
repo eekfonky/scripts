@@ -158,15 +158,14 @@ mount_on_vpn () {
 #!/bin/bash
 
 # Kerberos Ticket
-KRB_TICKET="$(ls /tmp/krb5cc_"$(id -ru "$USERNAME")"_*)"
-export KRB5CCNAME="$KRB_TICKET"
+KRB_TICKET="\$(ls /tmp/krb5cc_"\$(id -ru $USERNAME)"_*)"
+export KRB5CCNAME="\$KRB_TICKET"
 
-INTERFACE="$1"
-STATUS="$2"
+INTERFACE="\$1"
+STATUS="\$2"
 
-if [ "$STATUS" = "up" ]; then
-        if [ "$INTERFACE" = "vpn0" ] || [ "$INTERFACE" = "cscotun0" ]; then
-		sleep 5
+if [ "\$STATUS" = "up" ]; then
+        if [ "\$INTERFACE" = "vpn0" ] || [ "\$INTERFACE" = "cscotun0" ]; then
 		# Add Rules Below
 		sudo -u $USERNAME mount $DFS_MOUNT
         fi
