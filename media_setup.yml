@@ -1,7 +1,7 @@
 ---
 
 - name: Install and Configure Media Packages
-  hosts: media
+  hosts: server
   become: true
   tasks:
     - name: Update all packages to the latest version
