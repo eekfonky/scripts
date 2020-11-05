@@ -12,7 +12,7 @@
     - name: Mount External HDD in fstab
       mount:
         path: /mnt/extHD
-        src: f3224a20-0cab-4fea-9670-45e42a9550b6
+        src: UUID=f3224a20-0cab-4fea-9670-45e42a9550b6
         fstype: ext4
         state: mounted
     
