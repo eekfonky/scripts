@@ -117,17 +117,8 @@ install_plex () {
     check_installed
     # Install Plex
     echo -e "${YELLOW}Installing Plex Media Server...${NC}"
-    sleep 3
-    echo deb https://downloads.plex.tv/repo/deb public main | sudo tee /etc/apt/sources.list.d/plexmediaserver.list
-    curl https://downloads.plex.tv/plex-keys/PlexSign.key | sudo apt-key add -
-    # Create systemd service
-    if [ -f "$SYSD" ]; then
-        echo -e "${RED}${SERVICE} already exists, exiting back to menu...${NC}"
-        sleep 3
-        main_menu
-    fi
+    sudo snap install $SERVICE
 }
-
 
 ## Transmission
 install_transmission () {
@@ -262,7 +253,7 @@ User=$USER_ID
 Group=$USER_ID
 
 Type=simple
-ExecStart=/usr/bin/mono /opt/$SERVICE/$SERVICE.exe --nobrowser
+ExecStart=/opt/Radarr/Radarr -nobrowser -data=/home/chris/.config/Radarr/
 TimeoutStopSec=20
 KillMode=process
 Restart=on-failure
