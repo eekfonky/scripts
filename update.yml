@@ -8,8 +8,8 @@
         update_cache: yes
         cache_valid_time: 3600
         upgrade: dist
-      register: apt
-    - debug: msg={{ apt.stdout.split('\n')[:-1] }}
+        #      register: apt
+        #    - debug: msg={{ apt.stdout.split('\n')[:-1] }}
     - name: Remove unused packages and kernels
       apt:
         autoremove: yes
