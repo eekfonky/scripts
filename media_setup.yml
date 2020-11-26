@@ -38,7 +38,7 @@
 
     - name: Install Mediainfo repository
       apt:
-        deb: https://mediaarea.net/repo/deb/repo-mediaarea_1.0-13_all.deb
+        deb: https://mediaarea.net/repo/deb/repo-mediaarea_1.0-14_all.deb
 
     - name: Update apt cache
       apt:
