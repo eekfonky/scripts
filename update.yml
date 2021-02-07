@@ -10,12 +10,13 @@
         upgrade: full
     - name: Manually update snaps
       shell: snap refresh
-    - name: Remove useless packages from the cache
-      apt:
-        autoclean: yes  
+   # - name: Remove useless packages from the cache
+   #   apt:
+   #     autoclean: yes  
     - name: Remove unused packages and kernels
       apt:
         autoremove: yes
+        autoclean: yes
     - name: Check if a reboot is required
       stat:
         path: /var/run/reboot-required
