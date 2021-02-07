@@ -7,7 +7,7 @@
       apt:
         update_cache: yes
         cache_valid_time: 3600
-        upgrade: dist
+        upgrade: full
     - name: Remove unused packages and kernels
       apt:
         autoremove: yes
@@ -15,9 +15,8 @@
       stat:
         path: /var/run/reboot-required
       register: reboot_required_file
-    - name: Reboot the server
+    - name: Rebooting the server to apply updates
       reboot:
-        msg: "Reboot initiated by Ansible due to updates"
         connect_timeout: 5
         reboot_timeout: 300
         pre_reboot_delay: 0
