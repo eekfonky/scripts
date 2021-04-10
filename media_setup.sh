@@ -186,8 +186,17 @@ install_sonarr () {
     sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 2009837CBFFD68F45BC180471F4F90DE2A9B4BF8
     echo "deb https://apt.sonarr.tv/ubuntu $VERSION main" | sudo tee /etc/apt/sources.list.d/sonarr.list
 
-    # Install Sonarr
-    sudo apt -qq update && sudo apt -qq install -y $SERVICE
+    # Install Dependencies
+    sudo apt -qq update && sudo apt -qq install -y mediainfo debconf-utils
+
+        # debconf selections
+    cat << EOF | sudo debconf-set-selections                                                                                                                                                                  
+sonarr  sonarr/owning_group     string $USER_ID
+sonarr  sonarr/owning_user      string $USER_ID
+EOF
+
+    # Install Sonarr non-interactive
+    sudo DEBIAN_FRONTEND=noninteractive apt install $SERVICE -y
     
     # Create systemd service
     if [ -f "$SYSD" ]; then
@@ -203,7 +212,7 @@ After=network.target mnt-extHD.mount
 [Service]
 User=$USER_ID
 Group=$USER_ID
-UMask=002
+UMask=0002
 
 Type=simple
 ExecStart=/usr/bin/mono --debug /usr/lib/sonarr/bin/Sonarr.exe -nobrowser -data=/var/lib/sonarr
