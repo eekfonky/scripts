@@ -35,7 +35,7 @@ EOF
 
 packages_to_install () {
     echo -e "${YELLOW}Checking for dependencies..."
-    PKG_NAMES=("git" "unrar" "unzip" "curl" "mediainfo" "sqlite3")
+    PKG_NAMES=("git" "unrar" "unzip" "curl" "mediainfo" "sqlite3" "debconf-utils")
     # Add MediaInfo Repo
     wget https://mediaarea.net/repo/deb/repo-mediaarea_1.0-12_all.deb && \
     sudo dpkg -i repo-mediaarea_1.0-12_all.deb
@@ -184,7 +184,7 @@ sonarr  sonarr/owning_user      string $USER
 EOF
     
     # Install Sonarr
-    sudo DEBIAN_FRONTEND=noninteractive apt install $SERVICE debconf-utils -y
+    sudo DEBIAN_FRONTEND=noninteractive apt install $SERVICE -y
     
     # Create systemd service
     cat > "$SYSD" << EOF
