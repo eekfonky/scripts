@@ -17,13 +17,11 @@ check_sudo () {
 }
 
 up_to_date () {
-    echo -e "${YELLOW}Checking /etc/apt.sources..."
-    sudo sed -i.bak 's|# deb http://ports.ubuntu.com/ubuntu-ports focal-backports main restricted universe multiverse\
-    |deb http://ports.ubuntu.com/ubuntu-ports focal-backports main restricted universe multiverse|g' /etc/apt/sources.list
-    sudo sed -i.bak 's|# deb http://archive.canonical.com/ubuntu focal partner\
-    |deb http://archive.canonical.com/ubuntu focal partner|g' /etc/apt/sources.list
-    echo -e "${YELLOW}Checking for updates..."
-    sudo apt -qq update && sudo apt -qq dist-upgrade -y
+    echo -e "${YELLOW}Checking sources..."
+    sudo add-apt-repository main && \
+    sudo add-apt-repository restricted && \
+    sudo add-apt-repository multiverse && \
+    sudo add-apt-repository universe
 }
 
 mount_hdd_fstab () {
@@ -37,9 +35,12 @@ EOF
 
 packages_to_install () {
     echo -e "${YELLOW}Checking for dependencies..."
-    PKG_NAMES=("git" "unrar" "unzip")
+    PKG_NAMES=("git" "unrar" "unzip" "curl" "mediainfo" "sqlite3")
+    # Add MediaInfo Repo
+    wget https://mediaarea.net/repo/deb/repo-mediaarea_1.0-12_all.deb && \
+    sudo dpkg -i repo-mediaarea_1.0-12_all.deb
     # Run the run_install function if any of the applications are missing
-    dpkg -s "${PKG_NAMES[@]}" >/dev/null 2>&1 || sudo apt install -qqq "${PKG_NAMES[@]}"
+    dpkg -s "${PKG_NAMES[@]}" >/dev/null 2>&1 || ( sudo apt install -qqq "${PKG_NAMES[@]}" -y )
 }
 
 check_installed () {
@@ -111,13 +112,7 @@ EOF
 
 ## Plex Media Server
 install_plex () {
-    # Variables
-    SERVICE="plexmediaserver"
-    # Call "check_installed" function
-    check_installed
-    # Install Plex
-    echo -e "${YELLOW}Installing Plex Media Server...${NC}"
-    sudo snap install $SERVICE
+    sudo snap install plexmediaserver
 }
 
 ## Transmission
@@ -178,24 +173,21 @@ install_sonarr () {
     sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF
     echo "deb https://download.mono-project.com/repo/ubuntu stable-$VERSION main" | sudo tee /etc/apt/sources.list.d/mono-official-stable.list
     
-    # Add MediaInfo Repo
-    wget https://mediaarea.net/repo/deb/repo-mediaarea_1.0-12_all.deb && \
-    sudo dpkg -i repo-mediaarea_1.0-12_all.deb
-    
     # Add Sonarr Repo
     sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 2009837CBFFD68F45BC180471F4F90DE2A9B4BF8
     echo "deb https://apt.sonarr.tv/ubuntu $VERSION main" | sudo tee /etc/apt/sources.list.d/sonarr.list
 
+    # Change Users and Group
+    cat << EOF | sudo debconf-set-selections                                                                                                                                                                  
+sonarr  sonarr/owning_group     string $USER
+sonarr  sonarr/owning_user      string $USER
+EOF
+    
     # Install Sonarr
-    sudo apt -qq update && sudo apt -qq install -y $SERVICE
+    sudo DEBIAN_FRONTEND=noninteractive apt install $SERVICE debconf-utils -y
     
     # Create systemd service
-    if [ -f "$SYSD" ]; then
-        echo -e "${RED}${SERVICE} already exists, exiting back to menu...${NC}"
-        sleep 3
-        main_menu
-    else
-        cat > "$SYSD" << EOF
+    cat > "$SYSD" << EOF
 [Unit]
 Description=Sonarr Daemon
 After=network.target mnt-extHD.mount
@@ -203,7 +195,7 @@ After=network.target mnt-extHD.mount
 [Service]
 User=$USER_ID
 Group=$USER_ID
-UMask=002
+UMask=0002
 
 Type=simple
 ExecStart=/usr/bin/mono --debug /usr/lib/sonarr/bin/Sonarr.exe -nobrowser -data=/var/lib/sonarr
@@ -215,8 +207,9 @@ Restart=on-failure
 WantedBy=multi-user.target
 EOF
     fi
-    # Call "startup" function to Enable Service at boot
-    startup
+    
+    # reload systemctl service
+    sudo systemctl daemon-reload
 }
 
 ## Radarr
@@ -229,13 +222,17 @@ install_radarr () {
     # Installing
     echo -e "${YELLOW}Installing Radarr...${NC}"
     sleep 3
-    # Install dependency
-    sudo apt install libmono-i18n4.0-all -y
+        
+    # Add MediaInfo Repo
+    wget https://mediaarea.net/repo/deb/repo-mediaarea_1.0-12_all.deb && \
+    sudo dpkg -i repo-mediaarea_1.0-12_all.deb
+
     # Clone Radarr git repo
-    curl -L -O "$( curl -s https://api.github.com/repos/Radarr/Radarr/releases \
-    | grep linux.tar.gz | grep browser_download_url | head -1 | cut -d \" -f 4 )"
-    tar -xvzf Radarr.develop.*.linux.tar.gz
+    wget --content-disposition 'http://radarr.servarr.com/v1/update/master/updatefile?os=linux&runtime=netcore&arch=x64'
+    # Move to /opt and set permissions
+    tar -xvzf Radarr*.linux*.tar.gz
     sudo mv Radarr /opt
+    sudo chown -R "$USER_ID":"$USER_ID" /opt/Radarr
     
     # Create systemd service
     if [ -f "$SYSD" ]; then
@@ -253,7 +250,7 @@ User=$USER_ID
 Group=$USER_ID
 
 Type=simple
-ExecStart=/opt/Radarr/Radarr -nobrowser -data=/home/chris/.config/Radarr/
+ExecStart=/opt/Radarr/Radarr -nobrowser -data=/home/$USER_ID/.config/Radarr/
 TimeoutStopSec=20
 KillMode=process
 Restart=on-failure
