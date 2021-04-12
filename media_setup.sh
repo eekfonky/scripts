@@ -176,15 +176,19 @@ install_sonarr () {
     # Add Sonarr Repo
     sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 2009837CBFFD68F45BC180471F4F90DE2A9B4BF8
     echo "deb https://apt.sonarr.tv/ubuntu $VERSION main" | sudo tee /etc/apt/sources.list.d/sonarr.list
-
-    # Change Users and Group
-    cat << EOF | sudo debconf-set-selections                                                                                                                                                                  
-sonarr  sonarr/owning_group     string $USER
-sonarr  sonarr/owning_user      string $USER
-EOF
     
     # Install Sonarr
     sudo DEBIAN_FRONTEND=noninteractive apt install $SERVICE -y
+
+    # Change Users and Group
+cat << EOF | sudo debconf-set-selections
+sonarr  sonarr/owning_user      string  $USER_ID
+sonarr  sonarr/owning_group     string  $USER_ID                                                                                                                                                             
+sonarr  sonarr/owning_umask     string  0002
+sonarr  sonarr/config_directory string  /var/lib/sonarr
+EOF
+    # Reconfigure Sonarr
+    sudo DEBIAN_FRONTEND=noninteractive dpkg-reconfigure $SERVICE
     
     # Create systemd service
     cat > "$SYSD" << EOF
