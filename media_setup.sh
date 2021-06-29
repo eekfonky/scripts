@@ -17,7 +17,7 @@ check_sudo () {
 }
 
 up_to_date () {
-    echo -e "${YELLOW}Checking sources..."
+    echo -e "${YELLOW}Checking sources...${NC}"
     sudo add-apt-repository main && \
     sudo add-apt-repository restricted && \
     sudo add-apt-repository multiverse && \
@@ -29,7 +29,7 @@ mount_hdd_fstab () {
     sudo chown "$USER_ID":"$USER_ID" /mnt/extHD
     cat >> /etc/fstab << EOF
 # ExtHD
-UUID=f3224a20-0cab-4fea-9670-45e42a9550b6  /mnt/extHD  ext4   defaults  0      0
+#UUID=f3224a20-0cab-4fea-9670-45e42a9550b6  /mnt/extHD  ext4   defaults  0      0
 EOF
 }
 
@@ -86,7 +86,7 @@ install_nzbget () {
         cat > "$SYSD" << EOF
 [Unit]
 Description=NZBGet
-After=network.target mnt-extHD.mount
+After=network.target #mnt-extHD.mount
 
 [Service]
 User=$USER_ID
@@ -137,7 +137,7 @@ install_transmission () {
      cat > "$SYSD" << EOF
 [Unit]
 Description=Transmission BitTorrent Daemon
-After=network.target mnt-extHD.mount
+After=network.target #mnt-extHD.mount
 
 [Service]
 User=$USER_ID
@@ -182,19 +182,23 @@ install_sonarr () {
 
     # Change Users and Group
 cat << EOF | sudo debconf-set-selections
-sonarr  sonarr/owning_user      string  $USER_ID
-sonarr  sonarr/owning_group     string  $USER_ID                                                                                                                                                             
-sonarr  sonarr/owning_umask     string  0002
-sonarr  sonarr/config_directory string  /var/lib/sonarr
+sonarr  sonarr/owning_user      string $USER_ID
+sonarr  sonarr/owning_group     string $USER_ID                                                                                                                                                             
+sonarr  sonarr/owning_umask     string 0002
+sonarr  sonarr/config_directory string /var/lib/sonarr
 EOF
     # Reconfigure Sonarr
     sudo DEBIAN_FRONTEND=noninteractive dpkg-reconfigure $SERVICE
     
     # Create systemd service
-    cat > "$SYSD" << EOF
+        if [ -f "$SYSD" ]; then
+        echo -e "${RED}${SERVICE} already exists, exiting back to menu...${NC}"
+        sleep 3
+        main_menu
+    else
 [Unit]
 Description=Sonarr Daemon
-After=network.target mnt-extHD.mount
+After=network.target #mnt-extHD.mount
 
 [Service]
 User=$USER_ID
@@ -211,7 +215,6 @@ Restart=on-failure
 WantedBy=multi-user.target
 EOF
     fi
-    
     # reload systemctl service
     sudo systemctl daemon-reload
 }
@@ -247,7 +250,7 @@ install_radarr () {
         cat > "$SYSD" << EOF
 [Unit]
 Description=Radarr
-After=network.target mnt-extHD.mount
+After=network.target #mnt-extHD.mount
 
 [Service]
 User=$USER_ID
@@ -303,5 +306,5 @@ main_menu () {
 check_sudo
 up_to_date
 packages_to_install
-mount_hdd_fstab
+#mount_hdd_fstab
 main_menu
