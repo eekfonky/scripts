@@ -11,7 +11,7 @@
       when: ansible_facts['os_family'] == "Debian"
     - name: Update all packages to the latest version RedHat
       ansible.builtin.dnf:
-        cache_valid_time: 3600
+        update_cache: yes
         name: "*"
         state: latest
       when: ansible_facts['os_family'] == "RedHat"
