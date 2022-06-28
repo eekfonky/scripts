@@ -3,14 +3,26 @@
   hosts: all
   become: true
   tasks:
-    - name: Update all packages to the latest version
+    - name: Update all packages to the latest version Debian
       apt:
         update_cache: yes
         cache_valid_time: 3600
         upgrade: full
-    - name: Remove unused packages and kernels
+        when: ansible_distribution == 'Debian'
+    - name: Update all packages to the latest version RedHat
+      dnf:
+        update_cache: yes
+        cache_valid_time: 3600
+        upgrade: "*"
+        when: ansible_distribution == 'RedHat'
+    - name: Remove unused packages and kernels Debian
       apt:
         autoremove: yes
+        when: ansible_distribution == 'Debian'
+    - name: Remove unused packages and kernels RedHat
+      apt:
+        autoremove: yes
+        when: ansible_distribution == 'RedHat'    
     - name: Check if a reboot is required
       stat:
         path: /var/run/reboot-required
