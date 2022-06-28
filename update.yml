@@ -22,7 +22,7 @@
     - name: Remove unused packages and kernels RedHat
       dnf:
         autoremove: yes
-        when: ansible_distribution == 'RedHat'    
+        when: when: ansible_facts['os_family'] == "Debian"    
     - name: Check if a reboot is required
       stat:
         path: /var/run/reboot-required
