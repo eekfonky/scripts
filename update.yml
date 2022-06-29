@@ -38,12 +38,25 @@
       command: needs-restarting -r
       register: reboot_required_file
       when: ansible_facts['os_family'] == "RedHat"
-    - name: Reboot if required
+    - name: Reboot if required Debian
       reboot:
-        msg: "Reboot initiated by Ansible for kernel updates"
+        msg: "Reboot initiated by Ansible for kernel updates Debian"
         connect_timeout: 5
         reboot_timeout: 300
         pre_reboot_delay: 0
         post_reboot_delay: 30
         test_command: uptime
-      when: reboot_required_file.stat.exists
+      when:
+        - reboot_required_file.stat.exists
+        - ansible_facts['os_family'] == "Debian"
+    - name: Reboot if required RedHat
+      reboot:
+        msg: "Reboot initiated by Ansible for kernel updates RedHat"
+        connect_timeout: 5
+        reboot_timeout: 300
+        pre_reboot_delay: 0
+        post_reboot_delay: 30
+        test_command: uptime
+      when:
+        - reboot_required_file.rc == 1
+        - ansible_facts['os_family'] == "RedHat"
