@@ -9,6 +9,12 @@
         cache_valid_time: 3600
         upgrade: full
       when: ansible_facts['os_family'] == "Debian"
+    - name: Install Dependencies for RedHat
+      ansible.builtin.dnf:
+        update_cache: yes
+        name: dnf-utils
+        state: latest
+      when: ansible_facts['os_family'] == "RedHat"
     - name: Update all packages to the latest version RedHat
       ansible.builtin.dnf:
         update_cache: yes
@@ -27,6 +33,11 @@
       stat:
         path: /var/run/reboot-required
       register: reboot_required_file
+      when: ansible_facts['os_family'] == "Debian"
+    - name: Check if a reboot is required RedHat
+      command: needs-restarting -r
+      register: reboot_required_file
+      when: ansible_facts['os_family'] == "RedHat"
     - name: Reboot if required
       reboot:
         msg: "Reboot initiated by Ansible for kernel updates"
