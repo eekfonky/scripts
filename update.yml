@@ -47,8 +47,8 @@
         post_reboot_delay: 30
         test_command: uptime
       when:
-        - reboot_required_file.stat.exists
         - ansible_facts['os_family'] == "Debian"
+        - reboot_required_file.stat.exists
     - name: Reboot if required RedHat
       reboot:
         msg: "Reboot initiated by Ansible for kernel updates RedHat"
@@ -58,5 +58,5 @@
         post_reboot_delay: 30
         test_command: uptime
       when:
-        - reboot_required_file.rc == 1
         - ansible_facts['os_family'] == "RedHat"
+        - reboot_required_file.rc == 1
