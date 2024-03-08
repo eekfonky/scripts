@@ -7,7 +7,6 @@ import subprocess
 import re
 import importlib
 import tempfile
-import zipfile
 
 def installAndImport(package, module_name=None):
     module_name = module_name if module_name else package
@@ -17,69 +16,10 @@ def installAndImport(package, module_name=None):
         subprocess.check_call([sys.executable, "-m", "pip", "install", package])
         importlib.import_module(module_name)
 
-def unzip_and_remove_macosx(directory, extraction_path):
-    for filename in os.listdir(directory):
-        if filename.endswith('.zip'):
-            zip_file_path = os.path.join(directory, filename)
-            with zipfile.ZipFile(zip_file_path, 'r') as zip_ref:
-                zip_ref.extractall(extraction_path)
-
-            macosx_dir = os.path.join(extraction_path, '__MACOSX')
-            if os.path.exists(macosx_dir) and os.path.isdir(macosx_dir):
-                shutil.rmtree(macosx_dir)
-
-            os.remove(zip_file_path)
-            print(f"Extracted {filename} to {extraction_path}")
-
-def create_branch_from_target(repo, target_branch, new_branch, GitCommandError):
-    try:
-        original_branch = repo.active_branch.name
-        if orginal_branch != target_branch:
-            repo.git.checkout(target_branch)
-            repo.git.pull()  # Pull the latest changes from the remote repository
-        repo.git.checkout('-b', new_branch)
-        print(f"New branch '{new_branch}' created successfully from '{target_branch}'.")
-    except GitCommandError as e:
-        print(f"Error: {e}")
-
-def ensure_directory_exists(directory):
-    if not os.path.exists(directory):
-        os.makedirs(directory)
-
-def copy_files_to_templates(extraction_dir, template_dir):
-    # Dynamically get the first (top-level) directory name within the extraction directory
-    try:
-        top_level_dir_name = next(os.walk(extraction_dir))[1][0]
-    except IndexError:
-        print(f"No directories found in the extraction directory: {extraction_dir}")
-        return
-
-    top_level_dir_path = os.path.join(extraction_dir, top_level_dir_name)
-
-    for dirpath, _, filenames in os.walk(top_level_dir_path):
-        # Create a relative path from the top-level directory
-        relative_dir = os.path.relpath(dirpath, top_level_dir_path)
-        destination_dir = os.path.join(template_dir, top_level_dir_name, relative_dir)
-
-        print(f"Source Directory: {dirpath}")
-        print(f"Destination Directory: {destination_dir}")
-
-        # Create the destination directory if it does not exist
-        if not os.path.exists(destination_dir):
-            os.makedirs(destination_dir)
-            print(f"Created directory: {destination_dir}")
-
-        # Copy each file in the current directory to the destination
-        for filename in filenames:
-            source_file = os.path.join(dirpath, filename)
-            destination_file = os.path.join(destination_dir, filename)
-            shutil.copy(source_file, destination_file)
-            print(f"Copied {filename} to {destination_dir}")
-
 def perform_git_operations(repo, template_dir, branch_name, original_branch, GitCommandError):
     try:
         repo.index.add([template_dir])
-        repo.index.commit("Update templates")
+        repo.index.commit("Update backups")
 
         push_command = ["git", "push", "origin", branch_name]
         push_result = subprocess.check_output(push_command, text=True)
@@ -91,13 +31,6 @@ def perform_git_operations(repo, template_dir, branch_name, original_branch, Git
 
             # Checkout the original branch to allow removal of temp branch
             repo.git.checkout(original_branch)
-
-            # Remove the local branch
-            try:
-                repo.git.branch('-D', branch_name)
-                print(f"Local branch '{branch_name}' removed.")
-            except GitCommandError as e:
-                print(f"Error removing local branch: {e}")
 
     except subprocess.CalledProcessError as e:
         print(f"Error in Git operations: {e}")
@@ -127,9 +60,7 @@ def main():
 
     ##### Script Variables - EDIT THESE TO SUIT YOUR SETUP!! ####
     git_repo_root = os.path.expanduser("~/code/dev") # Where your repo starts
-    template_dir = "~/code/dev/server/trunk/services/src/main/resources/templates"
-    default_branch = "release/17"
-    zip_dir = "~/Downloads/email-sms-zips" # Where you save the zipped templated from Slack to
+    default_branch = "main"
     #### END ####
 
     # Expand paths and ensure directories exist
