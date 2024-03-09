@@ -7,9 +7,16 @@
     - name: Install common dependencies (if needed)
       ansible.builtin.package:
         name:
-          - dnf-utils   # For RedHat-based systems
-          - apt-utils   # For Debian-based systems
+          - dnf-utils
         state: latest
+      when: ansible_facts['os_family'] == 'RedHat'
+
+    - name: Install common dependencies (if needed)
+      ansible.builtin.package:
+        name:
+          - apt-utils
+        state: latest
+      when: ansible_facts['os_family'] == 'Debian'
 
     - name: Update all packages
       ansible.builtin.package:
