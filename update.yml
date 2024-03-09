@@ -4,14 +4,14 @@
   become: true
 
   tasks:
-    - name: Install common dependencies (if needed)
+    - name: Install common dependencies (if needed - RedHat based)
       ansible.builtin.package:
         name:
           - dnf-utils
         state: latest
       when: ansible_facts['os_family'] == 'RedHat'
 
-    - name: Install common dependencies (if needed)
+    - name: Install common dependencies (if needed - Debian based)
       ansible.builtin.package:
         name:
           - apt-utils
