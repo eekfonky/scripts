@@ -1,20 +1,69 @@
 #!/usr/bin/env python3
 
+import logging
 import os
-import time
-from datetime import datetime
+import importlib
+import shutil
+import zipfile
+import datetime
+from git import Repo, GitCommandError
 
-def list_files_with_creation_time(directory):
-    """Lists files in a directory with their creation times."""
+# Define directory paths for backups and the Git repository
+backup_base_dir = "/var/lib"  # Base directory for application backups
+repo_dir = "/home/chris/backups"
 
-    for filename in os.listdir(directory):
-        filepath = os.path.join(directory, filename)
-        if os.path.isfile(filepath):
-            creation_time = os.path.getctime(filepath)
-            formatted_time = datetime.fromtimestamp(creation_time).strftime('%Y-%m-%d %H:%M:%S')
-            print(f"{filename} Created: {formatted_time}")
+# Define applications and their backup paths/extensions
+apps = {
+    "Sonarr": ("sonarr/Backups/scheduled", "zip"),
+    "Radarr": ("radarr/Backups/scheduled", "zip"),
+    "Lidarr": ("lidarr/Backups/scheduled", "zip"),
+    "Whisparr": ("whisparr/Backups/scheduled", "zip"),
+    "Sabnzbd": ("sabnzbd/Backups/scheduled", "zip"), 
+    "transmission-daemon": ("transmission-daemon", None)  
+}
 
-# Specify the directory you want to examine
-directory = "/home/chris/backups"
+def install_and_import(package, module_name=None):
+    module_name = module_name if module_name else package
+    try:
+        importlib.import_module(module_name)
+    except ImportError:
+        subprocess.check_call([sys.executable, "-m", "pip", "install", package])
+        importlib.import_module(module_name)
 
-list_files_with_creation_time(directory)
+def add_backups_to_git(repo):
+    """Adds PVR backup zip files to the Git repository."""
+    for app, (backup_subdir, ext) in apps.items():
+        backup_path = os.path.join(backup_base_dir, backup_subdir, f"{app}.{ext}") if ext else os.path.join(backup_base_dir, backup_subdir)
+
+        if os.path.exists(backup_path):
+            repo.index.add(backup_path)
+            print(f"Added {backup_path} to staging area for {app}")
+
+def commit_changes(repo):
+    """Commits staged changes to the Git repository."""
+    if not repo.index.diff(None):
+        print("No changes detected. Skipping commit.")
+        return
+
+    commit_message = f"Backup for {datetime.datetime.now().strftime('%Y-%m-%d')}"
+    repo.index.commit(commit_message)
+    print(f"Committed changes with message: {commit_message}")
+
+def push_changes(repo):
+    """Pushes committed changes to the remote Git repository."""
+    origin = repo.remote("origin")
+    origin.push()
+    print("Pushed changes to remote repository.")
+
+
+def main():
+    install_and_import('GitPython', 'git')
+    from git import Repo, GitCommandError
+    repo = Repo(repo_dir)
+    add_backups_to_git(repo)
+    commit_changes(repo)
+    push_changes(repo)
+
+
+if __name__ == "__main__":
+    main()
