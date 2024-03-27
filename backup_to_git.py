@@ -49,10 +49,10 @@ def commit_changes(repo):
     print(f"Committed changes with message: {commit_message}")
 
 def push_changes(repo):
-    """Pushes committed changes to the remote Git repository."""
+    """Pushes committed changes to the 'main' branch on the remote Git repository."""
     origin = repo.remote("origin")
-    origin.push()
-    print("Pushed changes to remote repository.")
+    origin.push('main')  # Push directly to the 'main' branch
+    print("Pushed changes to remote repository (main branch).")
 
 
 def main():
