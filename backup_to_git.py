@@ -18,8 +18,7 @@ apps = {
     "Radarr": ("radarr/Backups/scheduled", "zip"),
     "Lidarr": ("lidarr/Backups/scheduled", "zip"),
     "Whisparr": ("whisparr/Backups/scheduled", "zip"),
-    "Sabnzbd": ("sabnzbd/Backups/scheduled", "zip"), 
-    "transmission-daemon": ("transmission-daemon", None)  
+    "Sabnzbd": ("sabnzbd/Backups/scheduled", "zip") 
 }
 
 def install_and_import(package, module_name=None):
