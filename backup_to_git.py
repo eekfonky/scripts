@@ -14,11 +14,11 @@ repo_dir = "/home/chris/backups"
 
 # Define applications and their backup paths/extensions
 apps = {
-    "Sonarr": ("sonarr/Backups/scheduled", "zip"),
-    "Radarr": ("radarr/Backups/scheduled", "zip"),
-    "Lidarr": ("lidarr/Backups/scheduled", "zip"),
-    "Whisparr": ("whisparr/Backups/scheduled", "zip"),
-    "Sabnzbd": ("sabnzbd/Backups/scheduled", "zip") 
+    "sonarr": ("sonarr/Backups/scheduled", "zip"),
+    "radarr": ("radarr/Backups/scheduled", "zip"),
+    "lidarr": ("lidarr/Backups/scheduled", "zip"),
+    "whisparr": ("whisparr/Backups/scheduled", "zip"),
+    "sabnzbd": ("sabnzbd/Backups/scheduled", "zip") 
 }
 
 def install_and_import(package, module_name=None):
@@ -32,11 +32,12 @@ def install_and_import(package, module_name=None):
 def add_backups_to_git(repo):
     """Adds PVR backup zip files to the Git repository."""
     for app, (backup_subdir, ext) in apps.items():
-        backup_path = os.path.join(backup_base_dir, backup_subdir, f"{app}.{ext}") if ext else os.path.join(backup_base_dir, backup_subdir)
+        backup_path = os.path.join(backup_base_dir, backup_subdir, f"{app}_backup*.{ext}") if ext else os.path.join(backup_base_dir, backup_subdir)
+        print(backup_path)
 
-        if os.path.exists(backup_path):
-            repo.index.add(backup_path)
-            print(f"Added {backup_path} to staging area for {app}")
+    if os.path.exists(backup_path):
+        repo.index.add(backup_path)
+        print(f"Added {backup_path} to staging area for {app}")
 
 def commit_changes(repo):
     """Commits staged changes to the Git repository."""
@@ -62,7 +63,6 @@ def main():
     add_backups_to_git(repo)
     commit_changes(repo)
     push_changes(repo)
-
 
 if __name__ == "__main__":
     main()
