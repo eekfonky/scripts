@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import datetime
 import os
 import git
 import shutil
@@ -44,14 +45,13 @@ def copy_and_add_backups_to_git(repo):
                         print(f"Updated {dest_path} in staging area for {app}")
 
 def commit_changes(repo):
-    """Commits staged changes to the Git repository."""
-    if not repo.index.diff(None):
-        print("No changes detected. Skipping commit.")
-        return
-
-    commit_message = f"Backup for {datetime.datetime.now().strftime('%Y-%m-%d')}"
-    repo.index.commit(commit_message)
-    print(f"Committed changes with message: {commit_message}")
+    try:
+        commit_message = f"Backup for {datetime.datetime.now().strftime('%Y-%m-%d')}"
+        print(f"Attempting commit with message: {commit_message}")  # Added
+        repo.index.commit(commit_message)
+        print("Committed changes successfully...")  
+    except git.exc.GitCommandError as e:
+        print(f"Error during commit: {e}")
 
 def push_changes(repo):
     """Pushes committed changes to the 'main' branch on the remote Git repository."""
@@ -61,10 +61,14 @@ def push_changes(repo):
 
 
 def main():
+    print("Starting backup script...") 
     repo = git.Repo(repo_dir)
     copy_and_add_backups_to_git(repo)
+    print("Added backups to staging area...") 
     commit_changes(repo)
+    print("Committed changes...") 
     push_changes(repo)
+    print("Pushed changes successfully") 
 
 if __name__ == "__main__":
     main()
