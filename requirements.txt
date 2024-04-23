@@ -1,0 +1,3 @@
+fuzzywuzzy
+GitPython
+python_magic

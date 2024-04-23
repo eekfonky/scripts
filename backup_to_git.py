@@ -1,12 +1,8 @@
 #!/usr/bin/env python3
 
-import logging
 import os
-import importlib
+import git
 import shutil
-import zipfile
-import datetime
-from git import Repo, GitCommandError
 
 # Define directory paths for backups and the Git repository
 backup_base_dir = "/var/lib"  # Base directory for application backups
@@ -21,23 +17,31 @@ apps = {
     "sabnzbd": ("sabnzbd/Backups/scheduled", "zip") 
 }
 
-def install_and_import(package, module_name=None):
-    module_name = module_name if module_name else package
-    try:
-        importlib.import_module(module_name)
-    except ImportError:
-        subprocess.check_call([sys.executable, "-m", "pip", "install", package])
-        importlib.import_module(module_name)
+def copy_and_add_backups_to_git(repo):
+    """Copies new backup zip files to the Git repository and stages them."""
+    existing_backups = [os.path.join(repo_dir, filename) for filename in repo.untracked_files]
 
-def add_backups_to_git(repo):
-    """Adds PVR backup zip files to the Git repository."""
     for app, (backup_subdir, ext) in apps.items():
-        backup_path = os.path.join(backup_base_dir, backup_subdir, f"{app}_backup*.{ext}") if ext else os.path.join(backup_base_dir, backup_subdir)
-        print(backup_path)
+        source_backup_dir = os.path.join(backup_base_dir, backup_subdir)
+        dest_backup_dir = os.path.join(repo_dir, app)  # Create app-specific directories in the repo
 
-    if os.path.exists(backup_path):
-        repo.index.add(backup_path)
-        print(f"Added {backup_path} to staging area for {app}")
+        os.makedirs(dest_backup_dir, exist_ok=True)  # Ensure destination directory exists
+
+        for filename in os.listdir(source_backup_dir):
+            if filename.endswith('.zip'):
+                source_path = os.path.join(source_backup_dir, filename)
+                dest_path = os.path.join(dest_backup_dir, filename)
+
+                if dest_path not in existing_backups:
+                    shutil.copy2(source_path, dest_path)  # Copy to the repo
+                    repo.index.add([dest_path])  # Stage in Git
+                    print(f"Copied and added {dest_path} to staging area for {app}")
+                else:
+                    # Check if the file has changed before copying/adding
+                    if not os.path.samefile(source_path, dest_path):
+                        shutil.copy2(source_path, dest_path) 
+                        repo.index.add([dest_path])
+                        print(f"Updated {dest_path} in staging area for {app}")
 
 def commit_changes(repo):
     """Commits staged changes to the Git repository."""
@@ -57,10 +61,8 @@ def push_changes(repo):
 
 
 def main():
-    install_and_import('GitPython', 'git')
-    from git import Repo, GitCommandError
-    repo = Repo(repo_dir)
-    add_backups_to_git(repo)
+    repo = git.Repo(repo_dir)
+    copy_and_add_backups_to_git(repo)
     commit_changes(repo)
     push_changes(repo)
 
