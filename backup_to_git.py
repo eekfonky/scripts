@@ -4,13 +4,14 @@ import datetime
 import os
 import git
 import shutil
+import logging
+import argparse
 
-# Define directory paths for backups and the Git repository
-backup_base_dir = "/var/lib"  # Base directory for application backups
-repo_dir = "/home/chris/backups"
+# Configuration (Make these configurable if desired)
+BACKUP_BASE_DIR = "/var/lib"  
+REPO_DIR = "/home/chris/backups"
 
-# Define applications and their backup paths/extensions
-apps = {
+APPS = {
     "sonarr": ("sonarr/Backups/scheduled", "zip"),
     "radarr": ("radarr/Backups/scheduled", "zip"),
     "lidarr": ("lidarr/Backups/scheduled", "zip"),
@@ -18,57 +19,58 @@ apps = {
     "sabnzbd": ("sabnzbd/Backups/scheduled", "zip") 
 }
 
-def copy_and_add_backups_to_git(repo):
-    """Copies new backup zip files to the Git repository and stages them."""
-    existing_backups = [os.path.join(repo_dir, filename) for filename in repo.untracked_files]
+def backup_application(app, backup_subdir, ext, repo):
+    """Backs up a single application to the Git repository."""
+    source_backup_dir = os.path.join(BACKUP_BASE_DIR, backup_subdir)
+    dest_backup_dir = os.path.join(REPO_DIR, app)
 
-    for app, (backup_subdir, ext) in apps.items():
-        source_backup_dir = os.path.join(backup_base_dir, backup_subdir)
-        dest_backup_dir = os.path.join(repo_dir, app)  # Create app-specific directories in the repo
+    os.makedirs(dest_backup_dir, exist_ok=True)
 
-        os.makedirs(dest_backup_dir, exist_ok=True)  # Ensure destination directory exists
+    for filename in os.listdir(source_backup_dir):
+        if filename.endswith(f'.{ext}'):
+            source_path = os.path.join(source_backup_dir, filename)
+            dest_path = os.path.join(dest_backup_dir, filename)
 
-        for filename in os.listdir(source_backup_dir):
-            if filename.endswith('.zip'):
-                source_path = os.path.join(source_backup_dir, filename)
-                dest_path = os.path.join(dest_backup_dir, filename)
+            backup_changed = not os.path.samefile(source_path, dest_path) 
 
-                if dest_path not in existing_backups:
-                    shutil.copy2(source_path, dest_path)  # Copy to the repo
-                    repo.index.add([dest_path])  # Stage in Git
-                    print(f"Copied and added {dest_path} to staging area for {app}")
-                else:
-                    # Check if the file has changed before copying/adding
-                    if not os.path.samefile(source_path, dest_path):
-                        shutil.copy2(source_path, dest_path) 
-                        repo.index.add([dest_path])
-                        print(f"Updated {dest_path} in staging area for {app}")
+            if backup_changed or dest_path not in repo.untracked_files:
+                shutil.copy2(source_path, dest_path)
+                repo.index.add([dest_path])
+                logging.info(f"{'Copied' if backup_changed else 'Added'} {dest_path} for {app}")
 
 def commit_changes(repo):
+    """Commits changes to the Git repository."""
     try:
         commit_message = f"Backup for {datetime.datetime.now().strftime('%Y-%m-%d')}"
-        print(f"Attempting commit with message: {commit_message}")  # Added
         repo.index.commit(commit_message)
-        print("Committed changes successfully...")  
+        logging.info("Committed changes successfully")
     except git.exc.GitCommandError as e:
-        print(f"Error during commit: {e}")
+        logging.error(f"Error during commit: {e}")
 
 def push_changes(repo):
-    """Pushes committed changes to the 'main' branch on the remote Git repository."""
-    origin = repo.remote("origin")
-    origin.push('main')  # Push directly to the 'main' branch
-    print("Pushed changes to remote repository (main branch).")
-
+    """Pushes committed changes to the remote Git repository."""
+    try:
+        origin = repo.remote("origin")
+        origin.push('main')
+        logging.info("Pushed changes to remote repository (main branch)")
+    except git.exc.GitCommandError as e:
+        logging.error(f"Error during push: {e}")
 
 def main():
-    print("Starting backup script...") 
-    repo = git.Repo(repo_dir)
-    copy_and_add_backups_to_git(repo)
-    print("Added backups to staging area...") 
+    parser = argparse.ArgumentParser(description="Application backup script")
+    parser.add_argument('--backup-dir', default=BACKUP_BASE_DIR, help='Base directory for backups')
+    parser.add_argument('--repo-dir', default=REPO_DIR, help='Git repository directory')
+    args = parser.parse_args()
+
+    logging.basicConfig(filename='backup.log', level=logging.INFO) 
+
+    repo = git.Repo(args.repo_dir)
+
+    for app, (backup_subdir, ext) in APPS.items():
+        backup_application(app, backup_subdir, ext, repo)
+
     commit_changes(repo)
-    print("Committed changes...") 
     push_changes(repo)
-    print("Pushed changes successfully") 
 
 if __name__ == "__main__":
     main()
