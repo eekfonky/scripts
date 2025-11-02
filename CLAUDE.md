@@ -13,9 +13,43 @@ This is a collection of utility scripts for Linux/Ubuntu system administration, 
 
 The repository contains both Python scripts (with external dependencies) and Bash scripts (requiring various system utilities).
 
+## Development Setup
+
+### Installing Dependencies
+
+```bash
+# Install production dependencies
+make install
+# Or: pip install -r requirements.txt
+
+# Install development dependencies
+make install-dev
+# Or: pip install -r requirements-dev.txt
+
+# Set up pre-commit hooks
+make setup-hooks
+# Or: pre-commit install
+```
+
+### Development Tools
+
+- **Makefile**: Run `make help` to see all available commands
+- **Pre-commit hooks**: Automatically format and lint code before commits
+- **Testing**: Run `make test` to execute unit tests
+- **Linting**: Run `make lint` for Python and shell script linting
+- **Formatting**: Run `make format` to auto-format Python code
+
 ## Python Scripts
 
+All Python scripts now follow a standardized structure with:
+- Proper argument parsing with `argparse`
+- Logging to both console and `~/.local/log/`
+- Dry-run mode support (`--dry-run` or `-n`)
+- Verbose mode (`--verbose` or `-v`)
+- Help documentation (`--help` or `-h`)
+
 ### Dependencies
+
 Install Python dependencies with:
 ```bash
 pip install -r requirements.txt
@@ -28,34 +62,46 @@ Required packages: `fuzzywuzzy`, `GitPython`, `python_magic`
 **backup_to_git.py**
 - Backs up application configs from `/var/lib` to a Git repository
 - Supports: Sonarr, Radarr, Lidarr, Whisparr, Sabnzbd
-- Automatically commits and pushes changes to the `main` branch
-- Usage: `./backup_to_git.py [--backup-dir DIR] [--repo-dir DIR]`
-- Default backup location: `/var/lib`
-- Default repo location: `/home/chris/backups`
+- Automatically commits and pushes changes
+- Usage: `./backup_to_git.py [OPTIONS]`
+  - `--backup-dir DIR`: Source directory (default: `/var/lib`)
+  - `--repo-dir DIR`: Git repository directory (default: `/home/chris/backups`)
+  - `--branch BRANCH`: Git branch to push to (default: `main`)
+  - `--apps APP [APP...]`: Backup only specific applications
+  - `-n, --dry-run`: Preview without making changes
+  - `-v, --verbose`: Enable verbose logging
+- Logs to: `~/.local/log/backup_to_git.log`
 
 **push_to_PR.py**
 - Automates template deployment workflow for a larger project
 - Extracts templates from ZIP files, creates feature branches, and pushes to remote
 - Uses UUID-based branch naming: `{initials}/{template-name}-{uuid}-no-build`
-- Expects templates to be in `~/Downloads/templates` by default
-- Git repo path is relative: `../../../` from script location
-- Templates go to: `server/trunk/services/src/main/resources/templates`
 - Usage: `./push_to_PR.py [-d BRANCH] [-z ZIP_DIR] [-f ZIP_FILE]`
 - Default branch: `release/17`
+- Default template location: `~/Downloads/templates`
 
 **fuzzyRename.py**
 - Renames AVI files to match corresponding MKV files using fuzzy string matching
-- Hardcoded directory path must be updated before use (line 33)
-- Uses fuzzywuzzy library for similarity matching
+- Usage: `./fuzzyRename.py [OPTIONS] DIRECTORY`
+  - `-t, --threshold N`: Minimum match ratio 0-100 (default: 70)
+  - `-n, --dry-run`: Preview without renaming
+  - `-v, --verbose`: Enable verbose logging
+- Example: `./fuzzyRename.py -t 80 ~/Videos`
 
 **rename_files.py**
-- Interactive script that renames single video files to match their parent directory name
+- Renames single video files to match their parent directory name
 - Uses python-magic to detect video files by MIME type
-- Prompts for directory path and only renames if exactly one video file exists
+- Usage: `./rename_files.py [OPTIONS] [DIRECTORY]`
+  - `-n, --dry-run`: Preview without renaming
+  - `-v, --verbose`: Enable verbose logging
+- If no directory provided, will prompt interactively
 
 ## Bash Scripts
 
-All bash scripts use color-coded output (RED, YELLOW, GREEN) for user feedback.
+All bash scripts use:
+- Color-coded output (RED, YELLOW, GREEN) for user feedback
+- Strict error handling (`set -euo pipefail`)
+- Help documentation (use `--help` or `-h`)
 
 **media_setup.sh**
 - Interactive installer for media server applications
@@ -64,7 +110,6 @@ All bash scripts use color-coded output (RED, YELLOW, GREEN) for user feedback.
 - Creates systemd service files for each application
 - Configures services to run as the logged-in user
 - Automatically enables services at boot
-- Note: Line 199 has a syntax error (missing `cat > "$SYSD" << EOF` before the heredoc)
 
 **dfs_ubuntu.sh**
 - Mounts DFS shares and Active Directory home directories on Ubuntu
@@ -77,15 +122,24 @@ All bash scripts use color-coded output (RED, YELLOW, GREEN) for user feedback.
 - Mount points created in user's home directory
 
 **transcode.sh**
-- Transcodes all MKV files in current directory to H.265
-- Uses ffmpeg with CRF=30 and slow preset
-- Output files: `{filename}_h265.mkv`
-- Copies first audio stream without re-encoding
+- Transcodes MKV files to H.265 (HEVC) codec
+- Usage: `./transcode.sh [OPTIONS] [DIRECTORY]`
+  - `-c, --crf N`: CRF value for quality (default: 30, recommend: 18-28)
+  - `-p, --preset PRESET`: Encoding preset (default: slow)
+  - `-s, --suffix SUFFIX`: Output suffix (default: `_h265`)
+  - `-n, --dry-run`: Preview without transcoding
+  - `-v, --verbose`: Show ffmpeg output
+- Example: `./transcode.sh -c 23 -p faster ~/Videos`
+- Lower CRF = better quality, larger files
+- Slower presets = better compression, longer encoding time
 
 **jimmy_files.sh**
-- Utility to move MP4 files from nested directories to current location
-- Removes empty directories after moving files
-- Hardcoded path: `/mnt/extHD/Downloads/complete/jimmy`
+- Utility to move MP4 files from nested directories
+- Usage: `./jimmy_files.sh [OPTIONS]`
+  - `--source DIR`: Source directory (default: `/mnt/extHD/Downloads/complete/jimmy`)
+  - `--dry-run`: Preview without moving/deleting
+- Asks for confirmation before moving files and deleting directories
+- Safety features prevent accidental data loss
 
 ## Ansible Playbooks
 
@@ -103,11 +157,42 @@ All bash scripts use color-coded output (RED, YELLOW, GREEN) for user feedback.
 - Automatically reboots if `/var/run/reboot-required` exists
 - Run with: `ansible-playbook update.yml`
 
+## Testing
+
+Basic unit tests are provided in the `tests/` directory:
+- `test_fuzzyRename.py`: Tests for fuzzy file renaming
+
+Run tests with:
+```bash
+make test
+# Or: pytest tests/ -v
+```
+
+## Code Quality
+
+### Linting
+```bash
+# Run all linters
+make lint
+
+# Python only
+make lint-python
+
+# Shell scripts only
+make lint-shell
+```
+
+### Formatting
+```bash
+# Format Python code
+make format
+```
+
 ## Important Notes
 
 ### Git Operations
 - Python scripts that push to Git expect specific branch structures and remote names
-- `backup_to_git.py` pushes to `main` branch
+- `backup_to_git.py` pushes to configurable branch (default: `main`)
 - `push_to_PR.py` creates branches with pattern: `{initials}/{name}-{uuid}-no-build`
 
 ### System Requirements
@@ -116,15 +201,15 @@ All bash scripts use color-coded output (RED, YELLOW, GREEN) for user feedback.
 - External HDD mount points expect specific UUIDs (update fstab entries accordingly)
 - DFS mounting requires Kerberos tickets and domain authentication
 
-### File Paths
-Several scripts have hardcoded paths that need updating for different environments:
-- `fuzzyRename.py`: Line 33 (directory path)
-- `jimmy_files.sh`: Line 2 (source directory)
-- `backup_to_git.py`: Lines 11-12 (backup and repo directories)
-- `push_to_PR.py`: Lines 22-23, 201-202 (default branch and template directories)
+### Configuration
+All scripts now support command-line configuration instead of hardcoded values:
+- Use `--help` on any script to see available options
+- Default values can be overridden via command-line arguments
+- Python scripts log to `~/.local/log/` directory
 
-### Testing Scripts
-Most scripts are system utilities without traditional unit tests. Test by:
-- Running in a VM or container before production use
-- Using `--help` or `-h` flags where available
-- Checking logs: `backup_to_git.py` writes to `backup.log`
+### Best Practices
+- Always use `--dry-run` mode first to preview changes
+- Use `--verbose` for debugging issues
+- Check script help documentation with `--help`
+- Run tests before committing changes: `make test`
+- Use pre-commit hooks to ensure code quality: `make setup-hooks`

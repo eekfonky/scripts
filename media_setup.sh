@@ -196,6 +196,7 @@ EOF
         sleep 3
         main_menu
     else
+        cat > "$SYSD" << EOF
 [Unit]
 Description=Sonarr Daemon
 After=network.target #mnt-extHD.mount
